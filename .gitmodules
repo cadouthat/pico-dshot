@@ -1,0 +1,3 @@
+[submodule "pico-pio-loader"]
+	path = pico-pio-loader
+	url = https://github.com/cadouthat/pico-pio-loader.git
