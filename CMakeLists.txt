@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 include(pico_sdk_import.cmake)
 
-add_subdirectory(pico-pio-loader)
+if (NOT TARGET pico_pio_loader)
+  add_subdirectory(pico-pio-loader)
+endif()
 
 project(pico_dshot C CXX ASM)
 set(CMAKE_C_STANDARD 11)
