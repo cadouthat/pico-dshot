@@ -11,11 +11,17 @@
 #include "dshot_encoder.pio.h"
 
 bool DShotEncoder::init() {
-  if (!pio_loader_add_or_get_offset(pio, &dshot_encoder_program, &pio_offset)) {
+  pio_sm = pio_claim_unused_sm(pio, /*required=*/false);
+  if (pio_sm < 0) {
     return false;
   }
 
-  pio_sm = pio_claim_unused_sm(pio, true);
+  if (!pio_loader_add_or_get_offset(pio, &dshot_encoder_program, &pio_offset)) {
+    pio_sm_unclaim(pio, pio_sm);
+    pio_sm = -1;
+    return false;
+  }
+
   dshot_encoder_program_init(pio, pio_sm, pio_offset, dshot_gpio);
   return true;
 }

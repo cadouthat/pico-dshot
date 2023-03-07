@@ -28,8 +28,8 @@ class DShotEncoder {
   uint dshot_gpio;
 
   PIO pio;
-  uint pio_offset = 0;
-  uint pio_sm = 0;
+  uint pio_offset;
+  int pio_sm = -1;
 };
 
 #endif
