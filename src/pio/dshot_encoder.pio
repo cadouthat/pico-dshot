@@ -12,18 +12,27 @@
 .define ZERO_HIGH_DELAY (ZERO_HIGH - 1)
 .define ZERO_LOW_DELAY (ZERO_LOW - 5)
 
-.define HALF_FRAME_DELAY 30
+// 8kHz DShot300 -> 1500 frame period -> 1500 - (BIT_PERIOD * 16 + 1) = 859 delay
+.define FRAME_DELAY (32 - 2)
+.define FRAME_DELAY_COUNT 26
+.define FRAME_DELAY_REMAINDER (27 - 5)  // 27 = 859 - 32 * 26
 
 init:
   pull block
   mov x, osr
 
-start_byte:
-  pull noblock  [HALF_FRAME_DELAY]
-  out y, 16     [HALF_FRAME_DELAY] ; discard 16 most significant bits
+start_frame:
+  pull noblock
+  mov x, osr
+  out y, 16 ; discard 16 most significant bits
+  set y, FRAME_DELAY_COUNT
+frame_delay_loop:
+  jmp !y check_bit [FRAME_DELAY]
+  jmp y-- frame_delay_loop
+  nop [FRAME_DELAY_REMAINDER]
 check_bit:
   jmp !osre start_bit
-  jmp start_byte
+  jmp start_frame
 start_bit:
   out y, 1
   jmp !y do_zero
@@ -48,8 +57,8 @@ static inline void dshot_encoder_program_init(PIO pio, uint sm, uint offset, uin
     sm_config_set_out_shift(&c, false, false, 32);
 
     double clocks_per_us = clock_get_hz(clk_sys) / 1000000;
-    // 6.67us per bit for dshot150
-    sm_config_set_clkdiv(&c, 6.67 / dshot_encoder_BIT_PERIOD * clocks_per_us);
+    // 3.333us per bit for dshot300
+    sm_config_set_clkdiv(&c, 3.333 / dshot_encoder_BIT_PERIOD * clocks_per_us);
 
     pio_sm_init(pio, sm, offset, &c);
 }
