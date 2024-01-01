@@ -19,7 +19,6 @@
 
 start_frame:
   pull block
-  mov x, osr
   out y, 16 ; discard 16 most significant bits
   set y, FRAME_DELAY_COUNT
 frame_delay_loop:
