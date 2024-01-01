@@ -14,12 +14,12 @@ class DShotEncoder {
   // Init PIO, but do not output data yet
   bool init();
 
-  // Set methods begin continuously generating output, repeating the last value
-  void setCommand(uint16_t c); // Set the DShot command value
-  void setThrottle(double t);  // Set the throttle in range [0, 1]
+  // Send a raw DShot command
+  void sendCommand(uint16_t c);
 
-  // Stop generating output (until next set command)
-  void stop();
+  // Send throttle command once, for specified throttle in range [0, 1]
+  // Note: this should be called often, most ESCs will disarm after a time period without throttle commands
+  void sendThrottle(double t);
 
  private:
   static constexpr uint16_t MIN_THROTTLE_COMMAND = 48;

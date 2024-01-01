@@ -23,10 +23,13 @@ bool DShotEncoder::init() {
   }
 
   dshot_encoder_program_init(pio, pio_sm, pio_offset, dshot_gpio);
+
+  // The PIO will begin waiting for command values
+  pio_sm_set_enabled(pio, pio_sm, true);
   return true;
 }
 
-void DShotEncoder::setCommand(uint16_t c) {
+void DShotEncoder::sendCommand(uint16_t c) {
   // Shift for telemetry bit (0)
   c = c << 1;
 
@@ -35,19 +38,14 @@ void DShotEncoder::setCommand(uint16_t c) {
   c = (c << 4) | checksum;
 
   pio_sm_put_blocking(pio, pio_sm, c);
-  pio_sm_set_enabled(pio, pio_sm, true);
 }
 
-void DShotEncoder::setThrottle(double t) {
+void DShotEncoder::sendThrottle(double t) {
   if (t < 0) t = 0;
   if (t > 1) t = 1;
 
   uint16_t c = MIN_THROTTLE_COMMAND + t * (MAX_THROTTLE_COMMAND - MIN_THROTTLE_COMMAND);
   if (c < MIN_THROTTLE_COMMAND) c = MIN_THROTTLE_COMMAND;
   if (c > MAX_THROTTLE_COMMAND) c = MAX_THROTTLE_COMMAND;
-  setCommand(c);
-}
-
-void DShotEncoder::stop() {
-  pio_sm_set_enabled(pio, pio_sm, false);
+  sendCommand(c);
 }

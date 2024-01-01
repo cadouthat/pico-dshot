@@ -17,12 +17,8 @@
 .define FRAME_DELAY_COUNT 26
 .define FRAME_DELAY_REMAINDER (27 - 5)  // 27 = 859 - 32 * 26
 
-init:
-  pull block
-  mov x, osr
-
 start_frame:
-  pull noblock
+  pull block
   mov x, osr
   out y, 16 ; discard 16 most significant bits
   set y, FRAME_DELAY_COUNT
