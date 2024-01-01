@@ -18,7 +18,7 @@ class DShotEncoder {
   void sendCommand(uint16_t c);
 
   // Send throttle command once, for specified throttle in range [0, 1]
-  // Note: this should be called often, most ESCs will disarm after a time period without throttle commands
+  // Note: this should be called often, 8000 times per second works well with ESCs tested
   void sendThrottle(double t);
 
  private:
