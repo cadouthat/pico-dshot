@@ -21,6 +21,9 @@ class DShotEncoder {
   // Note: this should be called often, 8000 times per second works well with ESCs tested
   void sendThrottle(double t);
 
+  // Util to compute the command value for a specified throttle in range [0, 1]
+  static uint16_t getThrottleCommand(double t);
+
  private:
   static constexpr uint16_t MIN_THROTTLE_COMMAND = 48;
   static constexpr uint16_t MAX_THROTTLE_COMMAND = 2047;

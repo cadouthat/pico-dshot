@@ -41,11 +41,15 @@ void DShotEncoder::sendCommand(uint16_t c) {
 }
 
 void DShotEncoder::sendThrottle(double t) {
+  sendCommand(getThrottleCommand(t));
+}
+
+uint16_t DShotEncoder::getThrottleCommand(double t) {
   if (t < 0) t = 0;
   if (t > 1) t = 1;
 
   uint16_t c = MIN_THROTTLE_COMMAND + t * (MAX_THROTTLE_COMMAND - MIN_THROTTLE_COMMAND);
   if (c < MIN_THROTTLE_COMMAND) c = MIN_THROTTLE_COMMAND;
   if (c > MAX_THROTTLE_COMMAND) c = MAX_THROTTLE_COMMAND;
-  sendCommand(c);
+  return c;
 }
