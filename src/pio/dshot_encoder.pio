@@ -12,12 +12,37 @@
 .define ZERO_HIGH_DELAY (ZERO_HIGH - 1)
 .define ZERO_LOW_DELAY (ZERO_LOW - 5)
 
-start_frame:
+// 8kHz DShot300 -> 1500 frame period -> 1500 - (BIT_PERIOD * 16 + 1) = 859 delay
+.define FRAME_DELAY (32 - 2)
+.define FRAME_DELAY_COUNT 26
+.define FRAME_DELAY_REMAINDER (27 - 7)  // 27 = 859 - 32 * 26, -7 for other instructions
+
+init:
+  ; These instructions are executed manually in the init function
+  ; pull block ; The very first value configures repeat enabled
+  ; mov isr, osr ; Store in ISR
+  ; Always block on the first pull
+  jmp blocking_pull
+
+maybe_pull:
+  mov y, isr
+  jmp !y blocking_pull
+  pull noblock
+  ; Repeat mode is enabled, delay is needed to control frame rate
+  nop [FRAME_DELAY_REMAINDER]
+  set y, FRAME_DELAY_COUNT
+frame_delay_loop:
+  jmp !y start_frame [FRAME_DELAY]
+  jmp y-- frame_delay_loop
+blocking_pull:
   pull block
+start_frame:
+  mov x, osr ; Store the value for re-use next time
+  jmp !x blocking_pull ; wait for non-zero value
   out y, 16 ; discard 16 most significant bits
 check_bit:
   jmp !osre start_bit
-  jmp start_frame
+  jmp maybe_pull
 start_bit:
   out y, 1
   jmp !y do_zero
@@ -32,7 +57,7 @@ do_zero:
 
 
 % c-sdk {
-static inline void dshot_encoder_program_init(PIO pio, uint sm, uint offset, uint pin) {
+static inline void dshot_encoder_program_init(PIO pio, uint sm, uint offset, uint pin, bool enable_repeat) {
     pio_sm_config c = dshot_encoder_program_get_default_config(offset);
 
     sm_config_set_set_pins(&c, pin, 1);
@@ -46,5 +71,13 @@ static inline void dshot_encoder_program_init(PIO pio, uint sm, uint offset, uin
     sm_config_set_clkdiv(&c, 3.333 / dshot_encoder_BIT_PERIOD * clocks_per_us);
 
     pio_sm_init(pio, sm, offset, &c);
+
+    pio_sm_put_blocking(pio, sm, enable_repeat);
+
+    pio_sm_exec_wait_blocking(pio, sm, pio_encode_pull(/*if_empty=*/false, /*block=*/true));
+    pio_sm_exec(pio, sm, pio_encode_mov(pio_isr, pio_osr));
+
+    // The PIO will begin waiting for the first command value
+    pio_sm_set_enabled(pio, sm, true);
 }
 %}

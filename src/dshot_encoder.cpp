@@ -10,7 +10,7 @@
 
 #include "dshot_encoder.pio.h"
 
-bool DShotEncoder::init() {
+bool DShotEncoder::init(bool enable_repeat) {
   pio_sm = pio_claim_unused_sm(pio, /*required=*/false);
   if (pio_sm < 0) {
     return false;
@@ -22,10 +22,7 @@ bool DShotEncoder::init() {
     return false;
   }
 
-  dshot_encoder_program_init(pio, pio_sm, pio_offset, dshot_gpio);
-
-  // The PIO will begin waiting for command values
-  pio_sm_set_enabled(pio, pio_sm, true);
+  dshot_encoder_program_init(pio, pio_sm, pio_offset, dshot_gpio, enable_repeat);
   return true;
 }
 
@@ -52,4 +49,9 @@ uint16_t DShotEncoder::getThrottleCommand(double t) {
   if (c < MIN_THROTTLE_COMMAND) c = MIN_THROTTLE_COMMAND;
   if (c > MAX_THROTTLE_COMMAND) c = MAX_THROTTLE_COMMAND;
   return c;
+}
+
+void DShotEncoder::stop() {
+  // Signal PIO to wait for the next push
+  pio_sm_put_blocking(pio, pio_sm, 0);
 }
